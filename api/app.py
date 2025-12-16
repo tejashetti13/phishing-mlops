@@ -15,7 +15,7 @@ def apply_protocol_rule(url: str, prob: float) -> float:
     url = url.lower()
 
     if url.startswith("https://"):
-        prob = prob * 0.7          # safer, not always safe
+        prob = prob * 0.4          # safer, not always safe
     elif url.startswith("http://"):
         prob = min(prob * 1.3, 1)  # riskier, cap at 1
 
