@@ -6,6 +6,21 @@ from pydantic import BaseModel
 
 from src.inference import predict_url
 
+def apply_protocol_rule(url: str, prob: float) -> float:
+    """
+    Soft rule-based adjustment:
+    - HTTPS reduces phishing risk slightly
+    - HTTP increases phishing risk slightly
+    """
+    url = url.lower()
+
+    if url.startswith("https://"):
+        prob = prob * 0.7          # safer, not always safe
+    elif url.startswith("http://"):
+        prob = min(prob * 1.3, 1)  # riskier, cap at 1
+
+    return prob
+
 # FastAPI app
 app = FastAPI(
     title="Phishing URL Detection API",
@@ -238,11 +253,19 @@ def predict(request: UrlRequest):
     """
     Predict if the given URL is phishing or legitimate.
     """
-    label, proba = predict_url(request.url)
+    raw_label, raw_prob = predict_url(request.url)
+
+    # Apply soft protocol rule
+    final_prob = apply_protocol_rule(request.url, raw_prob)
+
+    # Final decision threshold
+    final_label = 1 if final_prob >= 0.6 else 0
 
     return {
         "url": request.url,
-        "label": int(label),
-        "prediction": "phishing" if label == 1 else "legitimate",
-        "probability_phishing": proba,
+        "label": final_label,
+        "prediction": "phishing" if final_label == 1 else "legitimate",
+        "probability_phishing": round(final_prob, 4),
+        "model_probability": round(raw_prob, 4),
     }
+
