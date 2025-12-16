@@ -8,16 +8,16 @@ from src.inference import predict_url
 
 def apply_protocol_rule(url: str, prob: float) -> float:
     """
-    Soft rule-based adjustment:
-    - HTTPS reduces phishing risk slightly
-    - HTTP increases phishing risk slightly
+    Stronger soft rule-based adjustment:
+    - HTTPS significantly reduces phishing risk
+    - HTTP increases phishing risk
     """
     url = url.lower()
 
     if url.startswith("https://"):
-        prob = prob * 0.4          # safer, not always safe
+        prob = prob * 0.3          # stronger safety bias
     elif url.startswith("http://"):
-        prob = min(prob * 1.3, 1)  # riskier, cap at 1
+        prob = min(prob * 1.3, 1)  # increase risk
 
     return prob
 
